@@ -1,0 +1,1121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Team Quiz Battle</title>
+    <style>
+      :root {
+        --neon-blue: #00d2ff;
+        --neon-purple: #9d50bb;
+        --glass: rgba(255, 255, 255, 0.05);
+      }
+      body {
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        font-family: "Poppins", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        background: radial-gradient(circle at top right, #2d3436, #000000);
+        color: white;
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      .container {
+        display: flex;
+        gap: 40px;
+        width: 95%;
+        max-width: 1200px;
+        height: 80vh;
+        align-items: stretch;
+      }
+      .team-box {
+        background: var(--glass);
+        backdrop-filter: blur(15px);
+        border-radius: 25px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .question-header {
+        flex-shrink: 0;
+        text-align: center;
+      }
+      .team-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 30px;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .team-header h2 {
+        margin: 0;
+        font-size: 2rem;
+      }
+
+      .team-header .score {
+        font-size: 3rem;
+        margin: 0;
+      }
+
+      .board {
+        flex-grow: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      .action-area {
+        padding: 15px;
+        border-top: 1px solid transparent;
+        text-align: center;
+        min-height: 50px;
+      }
+
+      .timer-container {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 10px auto 20px auto;
+      }
+      .timer-svg {
+        transform: rotate(-90deg);
+      }
+      .timer-circle-bg {
+        fill: none;
+        stroke: #333;
+        stroke-width: 6;
+      }
+      .timer-circle {
+        fill: none;
+        stroke: url(#gradient);
+        stroke-width: 6;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s linear;
+      }
+      .timer-text {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .tile:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 10px 20px rgba(0, 210, 255, 0.4);
+      }
+
+      .tile {
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+        font-size: 1.8rem;
+        padding: 15px 25px;
+        margin: 8px;
+        background: linear-gradient(
+          45deg,
+          var(--neon-blue),
+          var(--neon-purple)
+        );
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        display: inline-block;
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .tile:active {
+        transform: scale(0.9);
+        background: #008fb3;
+      }
+      .slots-area {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .slot {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 60px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-size: 2.5rem;
+        font-weight: bold;
+        flex-direction: column;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .slot:not(:empty) {
+        cursor: pointer;
+        border-color: var(--neon-blue);
+      }
+      .slot:not(:empty):hover {
+        transform: scale(1.08);
+        background: rgba(231, 76, 60, 0.2) !important;
+        border-color: #e74c3c !important;
+      }
+
+      /* SOLID GREEN BLOCK PARA SA CORRECT SLOT */
+      .slot.correct {
+        background: #2ecc71 !important;
+        border-color: #27ae60 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+      }
+
+      /* SOLID RED BLOCK PARA SA INCORRECT SLOT */
+      .slot.incorrect {
+        background: #e74c3c !important;
+        border-color: #c0392b !important;
+        color: #ffffff !important;
+        animation: shake 0.3s ease-in-out;
+        box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      .feedback {
+        margin: 10px 0;
+        min-height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* GREEN BLOCK LABEL PARA SA CORRECT ANSWER */
+      .correct-answer-banner {
+        background: #2ecc71;
+        color: #ffffff;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        text-align: center;
+      }
+
+      /* YELLOW PERFECT BANNER WITH GLOW & POP EFFECT */
+      .perfect-banner {
+        color: #f1c40f;
+        font-size: 1.8rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-shadow:
+          0 0 10px rgba(241, 196, 15, 0.8),
+          0 0 20px rgba(241, 196, 15, 0.5);
+        animation:
+          perfectPop 0.5s ease-out forwards,
+          glowPulse 1.2s infinite alternate;
+      }
+
+      @keyframes perfectPop {
+        0% {
+          transform: scale(0.5);
+          opacity: 0;
+        }
+        70% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes glowPulse {
+        from {
+          text-shadow:
+            0 0 10px rgba(241, 196, 15, 0.8),
+            0 0 20px rgba(241, 196, 15, 0.5);
+        }
+        to {
+          text-shadow:
+            0 0 20px rgba(255, 234, 167, 1),
+            0 0 35px rgba(241, 196, 15, 0.9);
+        }
+      }
+
+      button {
+        background: linear-gradient(90deg, #ff7675, #d63031);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 5px;
+        transition: 0.2s;
+      }
+      button:hover {
+        transform: scale(1.05);
+      }
+      .btn-next {
+        background: linear-gradient(90deg, #00b894, #00cec9) !important;
+        font-size: 1.1rem;
+        padding: 14px 35px;
+        box-shadow: 0 0 15px rgba(0, 206, 201, 0.5);
+      }
+
+      #winnerModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .score-floater {
+        position: absolute;
+        font-size: 4rem;
+        font-weight: 900;
+        color: #00d2ff;
+        text-shadow: 0 0 20px rgba(0, 210, 255, 0.8);
+        animation: floatUpFade 2s ease-out forwards;
+        pointer-events: none;
+        z-index: 100;
+        top: 30%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      @keyframes floatUpFade {
+        0% {
+          transform: translate(-50%, 0) scale(0.5);
+          opacity: 0;
+        }
+        20% {
+          transform: translate(-50%, -20px) scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -100px) scale(1);
+          opacity: 0;
+        }
+      }
+
+      #hamburger {
+        position: fixed !important;
+        top: 15px;
+        left: 20px;
+        z-index: 9999 !important;
+        cursor: pointer;
+        color: white;
+        font-size: 2rem;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      }
+
+      .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+        z-index: 5000;
+      }
+
+      .modal-content {
+        background: #2d3436;
+        padding: 40px;
+        border-radius: 20px;
+        border: 2px solid var(--neon-blue);
+        text-align: center;
+        color: white;
+      }
+      input {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-family: "Poppins", sans-serif;
+        border: 1px solid var(--neon-blue) !important;
+      }
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  </head>
+
+  <!-- HOW TO PLAY MODAL -->
+  <div
+    id="howToModal"
+    style="
+      display: flex;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    "
+  >
+    <div
+      style="
+        text-align: left;
+        background: #2d3436;
+        padding: 30px;
+        border-radius: 20px;
+        border: 2px solid var(--neon-blue);
+        max-width: 500px;
+        color: white;
+      "
+    >
+      <p>
+        <strong>1. Start the Game / ゲーム開始</strong><br />
+        Click "Start Game" to begin. Each team has 20 seconds per question.<br />
+        <small
+          >「Start
+          Game」を押して開始します。各チーム、1問につき20秒の制限時間があります。</small
+        >
+      </p>
+
+      <p>
+        <strong>2. Solve the Puzzle / パズルを解く</strong><br />
+        Tap the letters or words to place them into the slots. Use "Reset" if
+        you make a mistake.<br />
+        <small
+          >表示されている文字や単語をタップしてスロットに入れます。間違えた場合は「Reset」ボタンを使ってください。</small
+        >
+      </p>
+
+      <p>
+        <strong>3. Scoring System / スコアリング</strong><br />
+        You earn 1 point for every correct letter or word placed in the right
+        slot!<br />
+        <small
+          >正解の文字や単語をスロットに入れるごとに、1ポイント獲得できます！</small
+        >
+      </p>
+
+      <p>
+        <strong>4. Automatic Finish / 自動終了</strong><br />
+        The game will automatically check your answer. Once the last question is
+        answered, the final total score and winner will be displayed.<br />
+        <small
+          >回答は自動的に採点されます。最後の問題が終わると、自動的に最終合計スコアと勝者が表示されます。</small
+        >
+      </p>
+      <div style="margin: 20px 0; text-align: center">
+        <label
+          >Team Name:
+          <input
+            type="text"
+            id="nameA"
+            placeholder="LEFT Team Name"
+            value=""
+            style="padding: 10px; margin: 5px; border-radius: 5px"
+          />
+        </label>
+        <input
+          type="text"
+          id="nameB"
+          placeholder="RIGHT Team Name"
+          value=""
+          style="padding: 10px; margin: 5px; border-radius: 5px"
+        />
+      </div>
+      <div style="text-align: center; margin-top: 20px">
+        <button
+          onclick="startGame()"
+          style="padding: 10px 40px; font-size: 1.2rem"
+        >
+          Start Game
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <body>
+    <div id="hamburger">☰</div>
+
+    <div id="settingsModal" class="overlay">
+      <div class="modal-content">
+        <h2>Settings</h2>
+        <button onclick="manualEndGame()" class="btn-end">END GAME</button>
+        <button onclick="closeModal('settingsModal')">Close</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- TEAM A -->
+      <div class="team-box" id="teamA">
+        <div class="team-header" style="background: #ff3838">
+          <div
+            class="question-counter"
+            id="counterA"
+            style="font-size: 1.2rem; font-weight: bold"
+          ></div>
+          <h2>BOYS</h2>
+          <div class="score">0</div>
+        </div>
+
+        <div class="timer-container">
+          <svg class="timer-svg" width="80" height="80">
+            <defs>
+              <linearGradient id="gradient">
+                <stop offset="0%" stop-color="#00d2ff" />
+                <stop offset="100%" stop-color="#9d50bb" />
+              </linearGradient>
+            </defs>
+            <circle class="timer-circle-bg" cx="40" cy="40" r="37" />
+            <circle class="timer-circle" id="circleA" cx="40" cy="40" r="37" />
+          </svg>
+          <div class="timer-text" id="timerA">20</div>
+        </div>
+        <div class="board"></div>
+        <div class="feedback"></div>
+        <div class="action-area"></div>
+      </div>
+
+      <!-- TEAM B -->
+      <div class="team-box" id="teamB">
+        <div class="team-header" style="background: #3c82f7">
+          <div
+            class="question-counter"
+            id="counterB"
+            style="font-size: 1.2rem; font-weight: bold"
+          ></div>
+          <h2>GIRLS</h2>
+          <div class="score">0</div>
+        </div>
+        <div class="timer-container">
+          <svg class="timer-svg" width="80" height="80">
+            <circle class="timer-circle-bg" cx="40" cy="40" r="37" />
+            <circle class="timer-circle" id="circleB" cx="40" cy="40" r="37" />
+          </svg>
+          <div class="timer-text" id="timerB">20</div>
+        </div>
+        <div class="board"></div>
+        <div class="feedback"></div>
+        <div class="action-area"></div>
+      </div>
+    </div>
+
+    <div id="winnerModal">
+      <div
+        style="
+          text-align: center;
+          background: #2d3436;
+          padding: 40px;
+          border-radius: 20px;
+          border: 2px solid var(--neon-blue);
+        "
+      >
+        <div id="finalResults"></div>
+        <button onclick="location.reload()">Play Again</button>
+      </div>
+    </div>
+
+    <script>
+      function playSound(fileName) {
+        const audio = new Audio(`assets/sound/${fileName}`);
+        audio.play().catch((e) => console.log("Audio play failed: ", e));
+      }
+
+      const bgMusic = new Audio("assets/sound/bgm.mp3");
+      bgMusic.loop = true;
+      bgMusic.volume = 0.2;
+
+      let teamQuestions = { teamA: [], teamB: [] };
+
+      const rawQuestions = [
+        {
+          type: "char",
+          questionText: "用意ができている",
+          sentence: "prepared",
+          letters: ["p", "r", "e", "p", "a", "r", "e", "d"],
+        },
+        {
+          type: "char",
+          questionText: "災害",
+          sentence: "disaster",
+          letters: ["d", "i", "s", "a", "s", "t", "e", "r"],
+        },
+        {
+          type: "char",
+          questionText: "避難所",
+          sentence: "shelter",
+          letters: ["s", "h", "e", "l", "t", "e", "r"],
+        },
+        {
+          type: "char",
+          questionText: "～を蓄える",
+          sentence: "store",
+          letters: ["s", "t", "o", "r", "e"],
+        },
+        {
+          type: "char",
+          questionText: "場合",
+          sentence: "case",
+          letters: ["c", "a", "s", "e"],
+        },
+        {
+          type: "char",
+          questionText: "消火器",
+          sentence: "extinguisher",
+          letters: ["e", "x", "t", "i", "n", "g", "u", "i", "s", "h", "e", "r"],
+        },
+        {
+          type: "char",
+          questionText: "～の場合には",
+          sentence: "in case of",
+          letters: ["i", "n", "c", "a", "s", "e", "o", "f"],
+        },
+        {
+          type: "char",
+          questionText: "do の過去分詞",
+          sentence: "done",
+          letters: ["d", "o", "n", "e"],
+        },
+        {
+          type: "char",
+          questionText: "準備をする、備える",
+          sentence: "prepare",
+          letters: ["p", "r", "e", "p", "a", "r", "e"],
+        },
+        {
+          type: "char",
+          questionText: "緊急事態",
+          sentence: "emergency",
+          letters: ["e", "m", "e", "r", "g", "e", "n", "c", "y"],
+        },
+        {
+          type: "char",
+          questionText: "道具一式",
+          sentence: "kit",
+          letters: ["k", "i", "t"],
+        },
+        {
+          type: "char",
+          questionText: "～をおすすめする",
+          sentence: "recommend",
+          letters: ["r", "e", "c", "o", "m", "m", "e", "n", "d"],
+        },
+        {
+          type: "char",
+          questionText: "地震",
+          sentence: "earthquake",
+          letters: ["e", "a", "r", "t", "h", "q", "u", "a", "k", "e"],
+        },
+        {
+          type: "char",
+          questionText: "we have の短縮形",
+          sentence: "we've",
+          letters: ["w", "e", "v", "e"],
+        },
+        {
+          type: "char",
+          questionText: "has not の短縮形",
+          sentence: "hasn't",
+          letters: ["h", "a", "s", "n", "t"],
+        },
+        {
+          type: "char",
+          questionText: "いくつかの",
+          sentence: "several",
+          letters: ["s", "e", "v", "e", "r", "a", "l"],
+        },
+        {
+          type: "char",
+          questionText: "架け橋、橋",
+          sentence: "bridge",
+          letters: ["b", "r", "i", "d", "g", "e"],
+        },
+        {
+          type: "char",
+          questionText: "～の間で",
+          sentence: "between",
+          letters: ["b", "e", "t", "w", "e", "e", "n"],
+        },
+        {
+          type: "char",
+          questionText: "～を励ます",
+          sentence: "encourage",
+          letters: ["e", "n", "c", "o", "u", "r", "a", "g", "e"],
+        },
+        {
+          type: "char",
+          questionText: "性格",
+          sentence: "personality",
+          letters: ["p", "e", "r", "s", "o", "n", "a", "l", "i", "t", "y"],
+        },
+        {
+          type: "char",
+          questionText: "襲う",
+          sentence: "hit",
+          letters: ["h", "i", "t"],
+        },
+        {
+          type: "char",
+          questionText: "～を元気づける",
+          sentence: "comfort",
+          letters: ["c", "o", "m", "f", "o", "r", "t"],
+        },
+        {
+          type: "char",
+          questionText: "近くの",
+          sentence: "nearby",
+          letters: ["n", "e", "a", "r", "b", "y"],
+        },
+        {
+          type: "char",
+          questionText: "安全な",
+          sentence: "safe",
+          letters: ["s", "a", "f", "e"],
+        },
+        {
+          type: "char",
+          questionText: "常に",
+          sentence: "all the time",
+          letters: ["a", "l", "l", "t", "h", "e", "t", "i", "m", "e"],
+        },
+        {
+          type: "char",
+          questionText: "ride の過去形",
+          sentence: "rode",
+          letters: ["r", "o", "d", "e"],
+        },
+        {
+          type: "char",
+          questionText: "自転車",
+          sentence: "bicycle",
+          letters: ["b", "i", "c", "y", "c", "l", "e"],
+        },
+        {
+          type: "char",
+          questionText: "～に向かって",
+          sentence: "toward",
+          letters: ["t", "o", "w", "a", "r", "d"],
+        },
+        {
+          type: "char",
+          questionText: "アパート",
+          sentence: "apartment",
+          letters: ["a", "p", "a", "r", "t", "m", "e", "n", "t"],
+        },
+        {
+          type: "char",
+          questionText: "catch の過去形",
+          sentence: "caught",
+          letters: ["c", "a", "u", "g", "h", "t"],
+        },
+        {
+          type: "char",
+          questionText: "津波",
+          sentence: "tsunami",
+          letters: ["t", "s", "u", "n", "a", "m", "i"],
+        },
+        {
+          type: "char",
+          questionText: "突然の",
+          sentence: "sudden",
+          letters: ["s", "u", "d", "d", "e", "n"],
+        },
+        {
+          type: "char",
+          questionText: "知らせ",
+          sentence: "news",
+          letters: ["n", "e", "w", "s"],
+        },
+        {
+          type: "char",
+          questionText: "まもなく",
+          sentence: "shortly",
+          letters: ["s", "h", "o", "r", "t", "l", "y"],
+        },
+        {
+          type: "char",
+          questionText: "コーナー",
+          sentence: "corner",
+          letters: ["c", "o", "r", "n", "e", "r"],
+        },
+        {
+          type: "char",
+          questionText: "交流",
+          sentence: "exchange",
+          letters: ["e", "x", "c", "h", "a", "n", "g", "e"],
+        },
+        {
+          type: "char",
+          questionText: "プログラム",
+          sentence: "program",
+          letters: ["p", "r", "o", "g", "r", "a", "m"],
+        },
+        {
+          type: "char",
+          questionText: "～を支える、支援する",
+          sentence: "support",
+          letters: ["s", "u", "p", "p", "o", "r", "t"],
+        },
+        {
+          type: "char",
+          questionText: "ふつうの、通常の",
+          sentence: "ordinary",
+          letters: ["o", "r", "d", "i", "n", "a", "r", "y"],
+        },
+        {
+          type: "char",
+          questionText: "危機",
+          sentence: "crisis",
+          letters: ["c", "r", "i", "s", "i", "s"],
+        },
+      ];
+
+      let teamIndices = { teamA: 0, teamB: 0 };
+      let teamScores = { teamA: 0, teamB: 0 };
+      let intervals = {};
+      let isEvaluating = { teamA: false, teamB: false };
+
+      function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+      }
+
+      function initGame() {
+        teamQuestions.teamA = shuffleArray([...rawQuestions]);
+        teamQuestions.teamB = shuffleArray([...rawQuestions]);
+
+        renderTeam("teamA");
+        renderTeam("teamB");
+      }
+
+      function renderTeam(teamId) {
+        isEvaluating[teamId] = false;
+
+        const box = document.getElementById(teamId);
+        const qIdx = teamIndices[teamId];
+        const qList = teamQuestions[teamId];
+
+        const counterEl = box.querySelector(".question-counter");
+        if (counterEl) {
+          counterEl.innerText = `${Math.min(qIdx + 1, qList.length)}/${qList.length}`;
+        }
+
+        box.querySelector(".feedback").innerHTML = "";
+
+        if (qIdx >= qList.length) {
+          clearInterval(intervals[teamId]);
+          const finalScore = teamScores[teamId];
+          box.querySelector(".board").innerHTML = `
+            <div style="padding: 30px; text-align: center;">
+              <h2 style="color: #00d2ff;">Waiting for game end...</h2>
+              <p>Your Final Score:</p>
+              <span style="color: #27ae60; font-weight: bold; font-size: 3.5rem;">${finalScore}</span>
+            </div>
+          `;
+          box.querySelector(".action-area").innerHTML = "";
+
+          if (
+            teamIndices.teamA >= teamQuestions.teamA.length &&
+            teamIndices.teamB >= teamQuestions.teamB.length
+          ) {
+            showWinnerModal();
+          }
+          return;
+        }
+
+        const q = qList[qIdx];
+        const tiles = shuffleArray([...q.letters]);
+        const displayItems = q.sentence.split("");
+
+        box.querySelector(".board").innerHTML = `
+          <div class="question-header"><h1>${q.questionText}</h1></div>
+          <div class="scrollable-content">
+            <div style="margin-bottom: 25px; padding:0px 10px;">
+              ${tiles.map((item) => `<span class="tile" onclick="moveLetter(this, '${teamId}')">${item}</span>`).join("")}
+            </div>
+            <div class="slots-area">
+              ${displayItems
+                .map((item) =>
+                  item === " "
+                    ? `<div style="width: 15px;"></div>`
+                    : `<span class="slot" onclick="removeLetter(this, '${teamId}')"></span>`,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+
+        box.querySelector(".action-area").innerHTML = `
+          <button onclick="resetBoard('${teamId}')">Reset</button>
+        `;
+
+        startTimer(teamId);
+      }
+
+      function moveLetter(tileEl, teamId) {
+        if (isEvaluating[teamId]) return;
+
+        const box = document.getElementById(teamId);
+        const slots = box.querySelectorAll(".slot");
+
+        let targetSlot = null;
+        for (let slot of slots) {
+          if (slot.innerText === "") {
+            targetSlot = slot;
+            break;
+          }
+        }
+
+        if (targetSlot) {
+          targetSlot.innerText = tileEl.innerText;
+          tileEl.style.display = "none";
+          playSound("click.mp3");
+
+          checkAutoSubmit(teamId);
+        }
+      }
+
+      function removeLetter(slotEl, teamId) {
+        if (isEvaluating[teamId] || !slotEl.innerText) return;
+
+        const letterToReturn = slotEl.innerText;
+        slotEl.innerText = "";
+
+        const box = document.getElementById(teamId);
+        const tiles = box.querySelectorAll(".tile");
+
+        for (let tile of tiles) {
+          if (
+            tile.innerText === letterToReturn &&
+            tile.style.display === "none"
+          ) {
+            tile.style.display = "inline-block";
+            break;
+          }
+        }
+
+        playSound("pop.mp3");
+      }
+
+      function resetBoard(teamId) {
+        if (isEvaluating[teamId]) return;
+
+        const box = document.getElementById(teamId);
+        const slots = box.querySelectorAll(".slot");
+        slots.forEach((slot) => (slot.innerText = ""));
+
+        const tiles = box.querySelectorAll(".tile");
+        tiles.forEach((tile) => (tile.style.display = "inline-block"));
+      }
+
+      function checkAutoSubmit(teamId) {
+        const box = document.getElementById(teamId);
+        const slots = box.querySelectorAll(".slot");
+        const allFilled = Array.from(slots).every(
+          (slot) => slot.innerText !== "",
+        );
+
+        if (allFilled) {
+          evaluateAnswer(teamId);
+        }
+      }
+
+      function evaluateAnswer(teamId) {
+        if (isEvaluating[teamId]) return;
+        isEvaluating[teamId] = true;
+
+        clearInterval(intervals[teamId]);
+
+        const box = document.getElementById(teamId);
+        const qIdx = teamIndices[teamId];
+        const currentQ = teamQuestions[teamId][qIdx];
+        const slots = box.querySelectorAll(".slot");
+
+        const targetLetters = currentQ.sentence
+          .split("")
+          .filter((c) => c !== " ");
+        let correctCount = 0;
+
+        slots.forEach((slot, idx) => {
+          if (slot.innerText === targetLetters[idx]) {
+            slot.classList.add("correct");
+            correctCount++;
+          } else {
+            slot.classList.add("incorrect");
+          }
+        });
+
+        teamScores[teamId] += correctCount;
+        box.querySelector(".score").innerText = teamScores[teamId];
+
+        if (correctCount > 0) {
+          showFloatingScore(box, `+${correctCount}`);
+          playSound("correct.mp3");
+        } else {
+          playSound("wrong.mp3");
+        }
+
+        // CONDITIONAL FEEDBACK: DILAW AT MAY EFFECT NA "PERFECT" KAPAG TAMA LAHAT
+        const feedbackEl = box.querySelector(".feedback");
+        if (correctCount === targetLetters.length) {
+          feedbackEl.innerHTML = `<div class="perfect-banner">✨ PERFECT! ✨</div>`;
+        } else {
+          feedbackEl.innerHTML = `<div class="correct-answer-banner">${currentQ.sentence}</div>`;
+        }
+
+        box.querySelector(".action-area").innerHTML = `
+          <button class="btn-next" onclick="nextQuestion('${teamId}')">Next Question ➔</button>
+        `;
+      }
+
+      function nextQuestion(teamId) {
+        teamIndices[teamId]++;
+        renderTeam(teamId);
+      }
+
+      function showFloatingScore(container, text) {
+        const floater = document.createElement("div");
+        floater.className = "score-floater";
+        floater.innerText = text;
+        container.appendChild(floater);
+        setTimeout(() => floater.remove(), 2000);
+      }
+
+      function startTimer(teamId) {
+        if (intervals[teamId]) clearInterval(intervals[teamId]);
+
+        let totalTime = 20;
+        let timeLeft = totalTime;
+        const box = document.getElementById(teamId);
+        const timerDisplay = box.querySelector(".timer-text");
+        const circle = box.querySelector(".timer-circle");
+
+        const radius = 37;
+        const circumference = 2 * Math.PI * radius;
+        circle.style.strokeDasharray = circumference;
+        circle.style.strokeDashoffset = 0;
+
+        if (timerDisplay) timerDisplay.innerText = timeLeft;
+
+        intervals[teamId] = setInterval(() => {
+          timeLeft--;
+          if (timerDisplay) timerDisplay.innerText = timeLeft;
+
+          const offset = circumference - (timeLeft / totalTime) * circumference;
+          circle.style.strokeDashoffset = offset;
+
+          if (timeLeft <= 0) {
+            clearInterval(intervals[teamId]);
+            evaluateAnswer(teamId);
+          }
+        }, 1000);
+      }
+
+      function startGame() {
+        const nameA = document.getElementById("nameA").value || "BOYS";
+        const nameB = document.getElementById("nameB").value || "GIRLS";
+
+        document.querySelector("#teamA .team-header h2").innerText = nameA;
+        document.querySelector("#teamB .team-header h2").innerText = nameB;
+
+        bgMusic.play().catch(() => {});
+        document.getElementById("howToModal").style.display = "none";
+
+        initGame();
+      }
+
+      document.getElementById("hamburger").addEventListener("click", () => {
+        document.getElementById("settingsModal").style.display = "flex";
+      });
+
+      function closeModal(id) {
+        document.getElementById(id).style.display = "none";
+      }
+
+      function manualEndGame() {
+        closeModal("settingsModal");
+        showWinnerModal();
+      }
+
+      function showWinnerModal() {
+        Object.keys(intervals).forEach((k) => clearInterval(intervals[k]));
+
+        const scoreA = teamScores.teamA;
+        const scoreB = teamScores.teamB;
+        const nameA = document.querySelector(
+          "#teamA .team-header h2",
+        ).innerText;
+        const nameB = document.querySelector(
+          "#teamB .team-header h2",
+        ).innerText;
+
+        let winnerText = "";
+        if (scoreA > scoreB) {
+          winnerText = `🏆 WINNER: ${nameA}! 🏆`;
+        } else if (scoreB > scoreA) {
+          winnerText = `🏆 WINNER: ${nameB}! 🏆`;
+        } else {
+          winnerText = "🤝 IT'S A TIE! 🤝";
+        }
+
+        document.getElementById("finalResults").innerHTML = `
+          <h1 style="color: var(--neon-blue); font-size: 2.5rem;">Game Over</h1>
+          <h2>${winnerText}</h2>
+          <p style="font-size: 1.5rem; margin-top: 20px;">
+            ${nameA}: <strong>${scoreA} pts</strong> <br>
+            ${nameB}: <strong>${scoreB} pts</strong>
+          </p>
+        `;
+
+        document.getElementById("winnerModal").style.display = "flex";
+      }
+    </script>
+  </body>
+</html>
